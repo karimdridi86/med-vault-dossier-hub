@@ -10,6 +10,7 @@ import Patients from "./pages/Patients";
 import PatientDetail from "./pages/PatientDetail";
 import Appointments from "./pages/Appointments";
 import MedicalHistory from "./pages/MedicalHistory";
+import ConsultationView from "./pages/ConsultationView";
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/patients/:id" element={<PatientDetail />} />
               <Route path="/appointments" element={<Appointments />} />
               <Route path="/medical-history/:id" element={<MedicalHistory />} />
+              <Route path="/consultation/:id" element={<ConsultationView />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
