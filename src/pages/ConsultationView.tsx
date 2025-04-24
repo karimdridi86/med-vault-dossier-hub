@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +25,7 @@ import {
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const mockConsultation = {
   id: "1",
@@ -40,10 +40,27 @@ const mockConsultation = {
   prescription: "",
 };
 
+const specialistOptions = [
+  { value: "cardiologist", label: "Cardiologue" },
+  { value: "dermatologist", label: "Dermatologue" },
+  { value: "neurologist", label: "Neurologue" },
+  { value: "ophthalmologist", label: "Ophtalmologue" },
+  { value: "orthopedist", label: "Orthopédiste" },
+  { value: "psychiatrist", label: "Psychiatre" },
+  { value: "radiologist", label: "Radiologue" },
+];
+
+const certificateTypes = [
+  { value: "work", label: "Arrêt de travail" },
+  { value: "school", label: "Certificat scolaire" },
+  { value: "sport", label: "Certificat sportif" },
+  { value: "other", label: "Autre" },
+];
+
 const medicalCertificateSchema = z.object({
   startDate: z.string().min(1, "Date de début requise"),
-  endDate: z.string().min(1, "Date de fin requise"),
-  returnDate: z.string().min(1, "Date de reprise requise"),
+  numberOfDays: z.number().min(1, "Nombre de jours requis"),
+  type: z.string().min(1, "Type de certificat requis"),
   reason: z.string().min(1, "Motif requis"),
 });
 
@@ -67,8 +84,26 @@ const ConsultationView = () => {
     resolver: zodResolver(referralSchema),
   });
 
+  const calculateEndDate = (startDate: string, days: number) => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+  };
+
+  const calculateReturnDate = (startDate: string, days: number) => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + days + 1);
+    return date.toISOString().split('T')[0];
+  };
+
   const handleMedicalCertificateSubmit = (data) => {
-    console.log("Medical certificate data:", data);
+    const endDate = calculateEndDate(data.startDate, data.numberOfDays);
+    const returnDate = calculateReturnDate(data.startDate, data.numberOfDays);
+    console.log("Medical certificate data:", {
+      ...data,
+      endDate,
+      returnDate,
+    });
     setIsShowingMedicalCertificate(false);
   };
 
@@ -106,6 +141,21 @@ const ConsultationView = () => {
             <form onSubmit={medicalCertificateForm.handleSubmit(handleMedicalCertificateSubmit)} className="space-y-4">
               <div className="space-y-4">
                 <div>
+                  <Label htmlFor="type">Type de certificat</Label>
+                  <Select onValueChange={(value) => medicalCertificateForm.setValue("type", value)} defaultValue={medicalCertificateForm.getValues("type")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner le type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {certificateTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="startDate">Date de début</Label>
                   <Input
                     type="date"
@@ -114,19 +164,11 @@ const ConsultationView = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endDate">Date de fin</Label>
+                  <Label htmlFor="numberOfDays">Nombre de jours</Label>
                   <Input
-                    type="date"
-                    id="endDate"
-                    {...medicalCertificateForm.register("endDate")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="returnDate">Date de reprise</Label>
-                  <Input
-                    type="date"
-                    id="returnDate"
-                    {...medicalCertificateForm.register("returnDate")}
+                    type="number"
+                    id="numberOfDays"
+                    {...medicalCertificateForm.register("numberOfDays", { valueAsNumber: true })}
                   />
                 </div>
                 <div>
@@ -162,10 +204,18 @@ const ConsultationView = () => {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="specialist">Spécialiste</Label>
-                  <Input
-                    id="specialist"
-                    {...referralForm.register("specialist")}
-                  />
+                  <Select onValueChange={(value) => referralForm.setValue("specialist", value)} defaultValue={referralForm.getValues("specialist")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un spécialiste" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {specialistOptions.map((specialist) => (
+                        <SelectItem key={specialist.value} value={specialist.value}>
+                          {specialist.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="referralReason">Motif</Label>
