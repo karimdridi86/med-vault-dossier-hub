@@ -75,6 +75,7 @@ const ConsultationView = () => {
   const [isShowingMedicalCertificate, setIsShowingMedicalCertificate] = useState(false);
   const [isShowingReferral, setIsShowingReferral] = useState(false);
   const [isShowingNewAppointment, setIsShowingNewAppointment] = useState(false);
+  const [selectedSpecialist, setSelectedSpecialist] = useState(null);
 
   const medicalCertificateForm = useForm({
     resolver: zodResolver(medicalCertificateSchema),
@@ -108,7 +109,10 @@ const ConsultationView = () => {
   };
 
   const handleReferralSubmit = (data) => {
-    console.log("Referral data:", data);
+    console.log("Referral data:", {
+      ...data,
+      specialist: selectedSpecialist,
+    });
     setIsShowingReferral(false);
   };
 
@@ -193,20 +197,26 @@ const ConsultationView = () => {
           <DialogTrigger asChild>
             <Button variant="outline" className="flex gap-2">
               <Send className="h-4 w-4" />
-              Référer
+              R��férer
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Référer à un spécialiste</DialogTitle>
             </DialogHeader>
             <form onSubmit={referralForm.handleSubmit(handleReferralSubmit)} className="space-y-4">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="specialist">Spécialiste</Label>
-                  <Select onValueChange={(value) => referralForm.setValue("specialist", value)} defaultValue={referralForm.getValues("specialist")}>
+                  <Label htmlFor="specialist">Spécialité</Label>
+                  <Select 
+                    onValueChange={(value) => {
+                      referralForm.setValue("specialist", value);
+                      setSelectedSpecialist(null);
+                    }} 
+                    defaultValue={referralForm.getValues("specialist")}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un spécialiste" />
+                      <SelectValue placeholder="Sélectionner une spécialité" />
                     </SelectTrigger>
                     <SelectContent>
                       {specialistOptions.map((specialist) => (
@@ -217,6 +227,22 @@ const ConsultationView = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {referralForm.watch("specialist") && (
+                  <SpecialistSearch
+                    specialty={specialistOptions.find(s => s.value === referralForm.getValues("specialist"))?.label}
+                    onSelect={(specialist) => setSelectedSpecialist(specialist)}
+                  />
+                )}
+
+                {selectedSpecialist && (
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="font-medium">Spécialiste sélectionné:</p>
+                    <p>{selectedSpecialist.name} - {selectedSpecialist.phone}</p>
+                    <p className="text-sm text-muted-foreground">{selectedSpecialist.address}</p>
+                  </div>
+                )}
+
                 <div>
                   <Label htmlFor="referralReason">Motif</Label>
                   <Textarea
@@ -229,7 +255,7 @@ const ConsultationView = () => {
                 <Button variant="outline" onClick={() => setIsShowingReferral(false)}>
                   Annuler
                 </Button>
-                <Button type="submit">Envoyer</Button>
+                <Button type="submit" disabled={!selectedSpecialist}>Envoyer</Button>
               </div>
             </form>
           </DialogContent>
